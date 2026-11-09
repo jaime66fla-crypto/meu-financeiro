@@ -28,6 +28,7 @@
       <button class="active" data-section="dashboard">Visão geral</button>
       <button data-section="receitas">Receitas</button>
       <button data-section="despesas">Despesas</button>
+      <button data-section="recorrentes">Recorrentes</button>
       <button data-section="orcamento">Planejamento</button>
       <button data-section="relatorios">Relatórios</button>
     </div>
@@ -49,6 +50,11 @@
 
     <section id="receitas" class="section"><div class="card table-card"><div class="toolbar"><input id="searchReceitas" placeholder="Pesquisar receitas..."><select id="filterReceitas"><option value="all">Todos</option><option value="paid">Recebidos</option><option value="pending">Pendentes</option></select></div><div id="receitasTable"></div></div></section>
     <section id="despesas" class="section"><div class="card table-card"><div class="toolbar"><input id="searchDespesas" placeholder="Pesquisar despesas..."><select id="filterDespesas"><option value="all">Todos</option><option value="paid">Pagos</option><option value="pending">Pendentes</option><option value="overdue">Vencidos</option></select></div><div id="despesasTable"></div></div></section>
+    <section id="recorrentes" class="section">
+      <div class="actions"><button id="newRecurringExpense" class="btn primary">+ Conta recorrente a pagar</button><button id="newRecurringIncome" class="btn">+ Conta recorrente a receber</button></div>
+      <h2>A pagar recorrentes</h2><div class="card table-card"><div id="recurringExpenseTable"></div></div>
+      <h2>A receber recorrentes</h2><div class="card table-card"><div id="recurringIncomeTable"></div></div>
+    </section>
     <section id="orcamento" class="section"><div class="actions"><button id="addBudget" class="btn primary">Definir orçamento mensal</button><button id="addGoal" class="btn">+ Nova meta</button></div><h2>Orçamento do mês</h2><div class="grid" id="budgetCards"></div><h2>Metas financeiras</h2><div class="grid" id="goalCards"></div></section>
     <section id="relatorios" class="section"><div class="card"><b>Relatório mensal</b><p style="color:var(--muted)">Resumo dos lançamentos do mês atual.</p><div id="reportContent"></div><button class="btn primary" onclick="window.print()">Imprimir / Salvar em PDF</button></div></section>
   </main>
@@ -64,6 +70,22 @@
   <div><label for="due">Vencimento</label><input id="due" type="date"></div>
   <div class="full"><label for="payment">Forma de pagamento</label><select id="payment"><option>PIX</option><option>Débito</option><option>Crédito</option><option>Dinheiro</option><option>Boleto</option><option>Transferência</option></select></div>
   <div class="full"><label for="notes">Observações</label><input id="notes" maxlength="2000"></div><div class="full" style="display:flex;justify-content:flex-end;gap:8px"><button type="button" class="btn" id="cancelModal">Cancelar</button><button class="btn primary" type="submit">Salvar</button></div>
+</form></div></div>
+
+<div id="recurringModal" class="modal hidden"><div class="modalbox"><div class="modalhead"><h3 style="margin:0"><span id="recurringModalTitle">Conta recorrente</span></h3><button class="btn" id="closeRecurringModal">Fechar</button></div><form id="recurringForm" class="form">
+  <div><label for="recType">Tipo</label><select id="recType"><option value="expense">A pagar</option><option value="income">A receber</option></select></div>
+  <div><label for="recActive">Situação</label><select id="recActive"><option value="true">Ativa</option><option value="false">Pausada</option></select></div>
+  <div class="full"><label for="recDescription">Descrição</label><input id="recDescription" required placeholder="Ex.: Aluguel, salário, mensalidade"></div>
+  <div><label for="recCategory">Categoria</label><select id="recCategory"></select></div>
+  <div><label for="recAmount">Valor</label><input id="recAmount" type="number" min="0.01" step="0.01" required></div>
+  <div><label for="recDay">Dia do vencimento</label><input id="recDay" type="number" min="1" max="31" value="10" required></div>
+  <div><label for="recKind">Recorrência</label><select id="recKind"><option value="monthly">Mensal</option><option value="installment">Parcelada</option></select></div>
+  <div><label for="recInstallments">Nº de parcelas</label><input id="recInstallments" type="number" min="1" placeholder="Somente parceladas"></div>
+  <div><label for="recStart">Início</label><input id="recStart" type="month" required></div>
+  <div><label for="recEnd">Fim (opcional)</label><input id="recEnd" type="month"></div>
+  <div class="full"><label for="recPayment">Forma de pagamento</label><select id="recPayment"><option value="">Não informada</option><option>PIX</option><option>Débito</option><option>Crédito</option><option>Dinheiro</option><option>Boleto</option><option>Transferência</option></select></div>
+  <div class="full"><label for="recNotes">Observações</label><input id="recNotes" maxlength="2000"></div>
+  <div class="full" style="display:flex;justify-content:flex-end;gap:8px"><button type="button" class="btn" id="cancelRecurringModal">Cancelar</button><button class="btn primary" type="submit">Salvar recorrência</button></div>
 </form></div></div>
 
 <script src="./supabase.js"></script>
