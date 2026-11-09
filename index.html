@@ -22,7 +22,7 @@
 </head>
 <body>
 <div id="notice" role="status" aria-live="polite" style="position:sticky;top:0;background:var(--card);padding:10px 20px;z-index:60"></div>
-<section id="authPanel" class="card" style="max-width:440px;margin:8vh auto"><h1>Meu Financeiro</h1><p>Seu dinheiro, organizado em um só lugar.</p><form id="authForm" class="form"><div class="full"><label for="email">E-mail</label><input id="email" type="email" autocomplete="email" required></div><div class="full"><label for="password">Senha</label><input id="password" type="password" minlength="8" autocomplete="current-password" required></div><div class="full actions"><button type="button" class="btn primary" id="loginBtn" onclick="authDirect('login')">Entrar</button><button type="button" class="btn" id="signupBtn" onclick="authDirect('signup')">Criar conta</button><button type="button" class="btn" id="forgotBtn" onclick="forgotPasswordDirect()">Esqueci minha senha</button></div></form><p style="color:var(--muted)">No primeiro acesso, crie sua conta e confirme seu e-mail.</p></section>
+<section id="authPanel" class="card" style="max-width:440px;margin:8vh auto"><h1>Meu Financeiro</h1><p>Seu dinheiro, organizado em um só lugar.</p><form id="authForm" class="form"><div class="full"><label for="email">E-mail</label><input id="email" type="email" autocomplete="email" required></div><div class="full"><label for="password">Senha</label><input id="password" type="password" minlength="8" autocomplete="current-password" required></div><div class="full actions"><button type="submit" class="btn primary" id="loginBtn" value="login">Entrar</button><button type="submit" class="btn" id="signupBtn" value="signup">Criar conta</button><button type="button" class="btn" id="forgotBtn">Esqueci minha senha</button></div></form><p style="color:var(--muted)">No primeiro acesso, crie sua conta e confirme seu e-mail.</p></section>
 <div id="app" class="app hidden">
   <aside class="sidebar">
     <div class="brand">Meu Financeiro</div>
@@ -113,51 +113,5 @@
 </form></div></div>
 
 <script src="./supabase.js?v=20261109-4"></script>
-<script>
-async function forgotPasswordDirect(){
-  const notice=document.getElementById('notice');
-  const email=document.getElementById('email').value.trim().toLowerCase();
-  const btn=document.getElementById('forgotBtn');
-  if(!email){notice.textContent='Informe seu e-mail antes de recuperar a senha.';document.getElementById('email').focus();return;}
-  btn.disabled=true;
-  notice.textContent='Enviando link de recuperação...';
-  try{
-    const client=window.supabase.createClient('https://dnfcqeawfcudnyxqzibb.supabase.co','sb_publishable_SMfgKezBGomReUbGJte69Q_6bHamg4j');
-    const redirectTo=window.location.origin+window.location.pathname;
-    const {error}=await client.auth.resetPasswordForEmail(email,{redirectTo});
-    if(error) throw error;
-    notice.textContent='Link de redefinição enviado. Verifique seu e-mail.';
-  }catch(e){
-    notice.textContent='Erro ao recuperar senha: '+(e?.message||String(e));
-  }finally{
-    btn.disabled=false;
-  }
-}
-
-async function authDirect(action){
-  const notice=document.getElementById('notice');
-  const email=document.getElementById('email').value.trim().toLowerCase();
-  const password=document.getElementById('password').value;
-  const btn=document.getElementById(action==='signup'?'signupBtn':'loginBtn');
-  if(!email||!password){notice.textContent='Informe e-mail e senha.';return;}
-  btn.disabled=true;
-  notice.textContent=action==='signup'?'Criando conta...':'Entrando...';
-  try{
-    const client=window.supabase.createClient('https://dnfcqeawfcudnyxqzibb.supabase.co','sb_publishable_SMfgKezBGomReUbGJte69Q_6bHamg4j');
-    const r=action==='signup'
-      ? await client.auth.signUp({email,password})
-      : await client.auth.signInWithPassword({email,password});
-    if(r.error) throw r.error;
-    if(action==='signup'&&!r.data.session){notice.textContent='Confira seu e-mail para confirmar o cadastro.';return;}
-    notice.textContent='Login realizado. Abrindo...';
-    window.location.reload();
-  }catch(e){
-    const m=e?.message||String(e);
-    notice.textContent=/invalid login credentials/i.test(m)?'E-mail ou senha incorretos.':'Erro ao entrar: '+m;
-  }finally{
-    btn.disabled=false;
-  }
-}
-</script>
-<script src="./app.js?v=20261109-4"></script>
+<script src="./app.js?v=20261109-5"></script>
 </body></html>
