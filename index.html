@@ -22,7 +22,7 @@
 </head>
 <body>
 <div id="notice" role="status" aria-live="polite" style="position:sticky;top:0;background:var(--card);padding:10px 20px;z-index:60"></div>
-<section id="authPanel" class="card" style="max-width:440px;margin:8vh auto"><h1>Meu Financeiro</h1><p>Seu dinheiro, organizado em um só lugar.</p><form id="authForm" class="form"><div class="full"><label for="email">E-mail</label><input id="email" type="email" autocomplete="email" required></div><div class="full"><label for="password">Senha</label><input id="password" type="password" minlength="8" autocomplete="current-password" required></div><div class="full actions"><button class="btn primary" value="login">Entrar</button><button class="btn" value="signup">Criar conta</button></div></form><p style="color:var(--muted)">No primeiro acesso, crie sua conta e confirme seu e-mail.</p></section>
+<section id="authPanel" class="card" style="max-width:440px;margin:8vh auto"><h1>Meu Financeiro</h1><p>Seu dinheiro, organizado em um só lugar.</p><form id="authForm" class="form"><div class="full"><label for="email">E-mail</label><input id="email" type="email" autocomplete="email" required></div><div class="full"><label for="password">Senha</label><input id="password" type="password" minlength="8" autocomplete="current-password" required></div><div class="full actions"><button type="submit" class="btn primary" id="loginBtn" value="login">Entrar</button><button type="submit" class="btn" id="signupBtn" value="signup">Criar conta</button></div></form><p style="color:var(--muted)">No primeiro acesso, crie sua conta e confirme seu e-mail.</p></section>
 <div id="app" class="app hidden">
   <aside class="sidebar">
     <div class="brand">Meu Financeiro</div>
