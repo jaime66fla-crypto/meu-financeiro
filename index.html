@@ -99,6 +99,104 @@ button:disabled{opacity:.55;cursor:wait;transform:none!important}
  table{min-width:720px}.table-card{overflow:auto}.metric .value{font-size:23px}.main{padding:12px}
  #authPanel{margin:3vh 12px!important;padding:20px!important}.modal{align-items:flex-end;padding:0}.modalbox{width:100%;border-radius:20px 20px 0 0;max-height:92vh}
 }
+
+/* Mobile UX refinement */
+@media(max-width:560px){
+  html,body{overflow-x:hidden}
+  body{font-size:15px}
+  .app{display:block;min-height:100dvh}
+  .sidebar{
+    position:sticky;top:0;height:auto;padding:8px 8px 7px;
+    border-right:0;border-bottom:1px solid rgba(255,255,255,.08);
+    z-index:40
+  }
+  .nav{gap:6px;padding-bottom:1px}
+  .nav button{
+    min-height:42px;padding:10px 13px;border-radius:11px;
+    font-size:13px;font-weight:700
+  }
+  .main{padding:12px 10px 88px}
+  .topbar{gap:10px;margin-bottom:14px}
+  .topbar>div:first-child{width:100%}
+  .topbar h1{font-size:22px}
+  .topbar>div:first-child>div{font-size:12px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .topbar .actions{
+    display:grid;width:100%;grid-template-columns:1fr 1fr;gap:8px
+  }
+  .topbar .actions input[type="month"]{grid-column:1/-1;width:100%;min-width:0;height:44px}
+  .topbar .actions .btn{width:100%;min-height:44px;padding:10px 8px}
+  #newBtn{grid-column:1/-1;order:-1}
+  .grid{grid-template-columns:1fr 1fr;gap:8px}
+  .card{padding:14px;border-radius:14px}
+  .metric{min-height:112px}
+  .metric .label{font-size:10px;line-height:1.25}
+  .metric .value{font-size:20px;word-break:break-word}
+  .metric small{font-size:11px}
+  .two{gap:8px;margin-top:8px}
+  .chart{height:190px;gap:10px;padding:16px 2px 6px}
+  h2{font-size:16px;margin:18px 0 8px}
+  .toolbar{display:grid;grid-template-columns:1fr;gap:8px;padding:10px}
+  .toolbar input,.toolbar select{width:100%;min-width:0;min-height:44px}
+  .section>.actions{display:grid;grid-template-columns:1fr;gap:8px}
+  .section>.actions .btn{width:100%;min-height:44px}
+  .table-card{overflow:visible;border-radius:14px}
+  .table-card>div:not(.toolbar){overflow:visible}
+  .table-card table{display:block;min-width:0;width:100%}
+  .table-card thead{display:none}
+  .table-card tbody{display:grid;gap:8px;padding:8px}
+  .table-card tr{
+    display:grid;grid-template-columns:1fr auto;gap:5px 10px;
+    padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card)
+  }
+  .table-card td{
+    display:block;padding:0;border:0;min-width:0;
+    font-size:12px;overflow-wrap:anywhere
+  }
+  .table-card td:first-child{
+    grid-column:1/-1;font-size:14px;font-weight:800;margin-bottom:2px
+  }
+  .table-card td.money{grid-column:2;text-align:right;font-size:14px}
+  .table-card td.row-actions{
+    grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;
+    padding-top:8px;margin-top:4px;border-top:1px solid var(--line)
+  }
+  .row-actions button{
+    margin:0;min-height:38px;padding:8px 10px!important;
+    border:1px solid var(--line)!important;border-radius:9px!important;
+    background:var(--card-2)!important
+  }
+  .badge{font-size:10px}
+  .form{grid-template-columns:1fr;gap:11px}
+  .form input,.form select{min-height:44px;font-size:16px}
+  .form .full{grid-column:auto}
+  .modal{align-items:flex-end;padding:0}
+  .modalbox{
+    width:100%;max-height:94dvh;padding:16px 14px 18px;
+    border-radius:20px 20px 0 0
+  }
+  .modalhead{position:sticky;top:-16px;background:var(--card);z-index:2;padding:12px 0}
+  .modalhead .btn{min-height:40px}
+  .modalbox .full[style*="justify-content:flex-end"]{
+    display:grid!important;grid-template-columns:1fr 1fr!important
+  }
+  .modalbox .full[style*="justify-content:flex-end"] .btn{min-height:44px;width:100%}
+  #notice{
+    left:10px;right:10px;top:10px;max-width:none;
+    font-size:13px
+  }
+  #authPanel{margin:16px 10px!important;padding:18px!important;border-radius:16px}
+  #authPanel h1{font-size:26px}
+  #authPanel .actions{display:grid;grid-template-columns:1fr;gap:8px}
+  #authPanel .actions .btn{width:100%;min-height:44px}
+}
+@media(max-width:390px){
+  .grid{grid-template-columns:1fr}
+  .topbar .actions{grid-template-columns:1fr}
+  .topbar .actions input[type="month"],#newBtn{grid-column:auto}
+  .nav button{padding:9px 11px}
+  .main{padding-left:8px;padding-right:8px}
+}
+
 @media print{.sidebar,.topbar,.btn,#notice{display:none!important}.app{display:block}.section{display:none!important}#relatorios{display:block!important}.card{box-shadow:none}}
 </style>
 </head>
