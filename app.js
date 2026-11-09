@@ -1,11 +1,22 @@
 
 const fmt = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
+const APP_URL='https://jaime66fla-crypto.github.io/meu-financeiro/';
 const today = new Date(); const isoToday = new Intl.DateTimeFormat('en-CA').format(today); document.getElementById('date').value=isoToday;
 let data=[], categories=[], budgets=[], goals=[], recurring=[], cashAccounts=[], editing=null, recurringEditing=null, cashEditing=null, user=null;
 const $=id=>document.getElementById(id);
 const db=window.supabase.createClient('https://dnfcqeawfcudnyxqzibb.supabase.co','sb_publishable_SMfgKezBGomReUbGJte69Q_6bHamg4j');
 const escapeHTML=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function handleAuthRedirectError(){
+  const hash=new URLSearchParams(location.hash.replace(/^#/,''));
+  const code=hash.get('error_code');
+  if(!code)return;
+  const description=(hash.get('error_description')||'').replace(/\+/g,' ');
+  if(code==='otp_expired') notice('Este link expirou ou já foi usado. Solicite um novo link em "Esqueci minha senha".');
+  else notice('Não foi possível concluir a autenticação: '+(description||code));
+  history.replaceState(null,'',location.pathname+location.search);
+}
 function notice(s){$('notice').textContent=s}
+handleAuthRedirectError();
 function fail(e){notice('Não foi possível concluir: '+(e.message||e))}
 async function check(q){const r=await q;if(r.error)throw r.error;return r.data}
 async function load(){
@@ -43,7 +54,7 @@ document.getElementById('newBtn').onclick=()=>{closeModal();categoryOptions();$(
 document.getElementById('themeBtn').onclick=()=>{document.body.classList.toggle('dark');localStorage.setItem('dark',document.body.classList.contains('dark')?'1':'0')};if(localStorage.getItem('dark')==='1')document.body.classList.add('dark');['searchReceitas','filterReceitas','searchDespesas','filterDespesas'].forEach(id=>document.getElementById(id).addEventListener('input',renderTables));
 
 $('month').value=isoToday.slice(0,7);$('month').onchange=renderAll;$('type').onchange=categoryOptions;
-$('authForm').onsubmit=async e=>{e.preventDefault();const b=e.submitter||$('loginBtn');const action=b?.value||'login';if(b)b.disabled=true;notice(action==='signup'?'Criando conta...':'Entrando...');try{const credentials={email:$('email').value.trim().toLowerCase(),password:$('password').value};if(!credentials.email||!credentials.password)throw Error('Informe e-mail e senha.');const r=action==='signup'?await db.auth.signUp(credentials):await db.auth.signInWithPassword(credentials);if(r.error)throw r.error;if(action==='signup'&&!r.data.session){notice('Confira seu e-mail para confirmar o cadastro.');return}if(!r.data.session)throw Error('Não foi possível iniciar a sessão.');await sessionChanged(r.data.session);notice('Conectado.')}catch(e){const msg=(e?.message||String(e));if(/invalid login credentials/i.test(msg))notice('E-mail ou senha incorretos.');else fail(e)}finally{if(b)b.disabled=false}};
+$('authForm').onsubmit=async e=>{e.preventDefault();const b=e.submitter||$('loginBtn');const action=b?.value||'login';if(b)b.disabled=true;notice(action==='signup'?'Criando conta...':'Entrando...');try{const credentials={email:$('email').value.trim().toLowerCase(),password:$('password').value};if(!credentials.email||!credentials.password)throw Error('Informe e-mail e senha.');const r=action==='signup'?await db.auth.signUp({...credentials,options:{emailRedirectTo:APP_URL}}):await db.auth.signInWithPassword(credentials);if(r.error)throw r.error;if(action==='signup'&&!r.data.session){notice('Confira seu e-mail para confirmar o cadastro.');return}if(!r.data.session)throw Error('Não foi possível iniciar a sessão.');await sessionChanged(r.data.session);notice('Conectado.')}catch(e){const msg=(e?.message||String(e));if(/invalid login credentials/i.test(msg))notice('E-mail ou senha incorretos.');else fail(e)}finally{if(b)b.disabled=false}};
 $('logout').onclick=async()=>{try{await check(db.auth.signOut());await sessionChanged(null);notice('Você saiu da conta.')}catch(e){fail(e)}};
 $('addCategory').onclick=async()=>{const name=prompt('Nome da categoria:');if(!name?.trim())return;try{await check(db.from('categories').insert({user_id:user.id,name:name.trim(),type:$('type').value}));await load();notice('Categoria criada.')}catch(e){fail(e)}};
 function moneyInput(label,initial=''){const v=prompt(label,initial);if(v===null)return null;const n=Number(v.replace(',','.'));if(!Number.isFinite(n)||n<0)throw Error('Valor inválido. Use apenas números.');return n}
@@ -87,7 +98,7 @@ window.deleteCash=async id=>{if(!confirm('Excluir esta conta/reserva?'))return;t
 $('cashForm').addEventListener('submit',async e=>{e.preventDefault();const b=e.submitter;b.disabled=true;try{const payload={user_id:user.id,name:$('cashName').value.trim(),institution:$('cashInstitution').value.trim()||null,account_type:$('cashType').value,balance:Number($('cashBalance').value),active:$('cashActive').value==='true',notes:$('cashNotes').value.trim(),updated_at:new Date().toISOString()};if(!payload.name||payload.balance<0)throw Error('Informe nome e saldo válido.');await check(cashEditing?db.from('cash_accounts').update(payload).eq('id',cashEditing).eq('user_id',user.id).select().single():db.from('cash_accounts').insert(payload).select().single());closeCashModal();await load();notice('Conta/reserva salva.')}catch(e){fail(e)}finally{b.disabled=false}});
 $('newCashAccount').onclick=openCashModal;$('closeCashModal').onclick=closeCashModal;$('cancelCashModal').onclick=closeCashModal;
 
-$('forgotBtn').onclick=async()=>{const email=$('email').value.trim().toLowerCase();if(!email){notice('Informe seu e-mail antes de recuperar a senha.');$('email').focus();return}const b=$('forgotBtn');b.disabled=true;try{const redirectTo='https://jaime66fla-crypto.github.io/meu-financeiro/';const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo});if(error)throw error;notice('Enviamos um link de redefinição para seu e-mail.')}catch(e){fail(e)}finally{b.disabled=false}};
+$('forgotBtn').onclick=async()=>{const email=$('email').value.trim().toLowerCase();if(!email){notice('Informe seu e-mail antes de recuperar a senha.');$('email').focus();return}const b=$('forgotBtn');b.disabled=true;try{const redirectTo=APP_URL;const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo});if(error)throw error;notice('Enviamos um link de redefinição para seu e-mail.')}catch(e){fail(e)}finally{b.disabled=false}};
 function closeResetModal(){$('resetModal').classList.add('hidden');$('resetForm').reset()}
 $('closeResetModal').onclick=closeResetModal;$('cancelResetModal').onclick=closeResetModal;
 $('resetForm').addEventListener('submit',async e=>{e.preventDefault();const b=e.submitter;b.disabled=true;try{const p=$('newPassword').value,c=$('confirmPassword').value;if(p.length<6)throw Error('A senha precisa ter pelo menos 6 caracteres.');if(p!==c)throw Error('As senhas não coincidem.');const {error}=await db.auth.updateUser({password:p});if(error)throw error;closeResetModal();notice('Senha alterada com sucesso. Você já pode entrar com a nova senha.')}catch(e){fail(e)}finally{b.disabled=false}});
