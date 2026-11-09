@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Meu Financeiro</title>
+  <meta name="theme-color" content="#111827" />
+  <style>
+    :root{--bg:#f4f6f8;--card:#fff;--text:#111827;--muted:#6b7280;--line:#e5e7eb;--primary:#2563eb;--danger:#dc2626;--success:#059669;--warn:#d97706;--shadow:0 8px 24px rgba(0,0,0,.06)}
+    body.dark{--bg:#0f172a;--card:#111827;--text:#f8fafc;--muted:#94a3b8;--line:#273449;--primary:#60a5fa;--danger:#f87171;--success:#34d399;--warn:#fbbf24;--shadow:0 8px 24px rgba(0,0,0,.25)}
+    *{box-sizing:border-box} body{margin:0;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text)}
+    .app{display:grid;grid-template-columns:235px 1fr;min-height:100vh}.sidebar{background:#0b1220;color:white;padding:20px 14px;position:sticky;top:0;height:100vh}.brand{font-size:20px;font-weight:800;padding:8px 10px 22px}.nav button{width:100%;border:0;background:transparent;color:#cbd5e1;padding:11px 12px;border-radius:10px;text-align:left;font-size:14px;cursor:pointer;margin:3px 0}.nav button.active,.nav button:hover{background:#1e293b;color:#fff}.main{padding:22px}.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}.topbar h1{margin:0;font-size:24px}.actions{display:flex;gap:8px;flex-wrap:wrap}.btn{border:1px solid var(--line);background:var(--card);color:var(--text);padding:9px 12px;border-radius:9px;cursor:pointer}.btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}.btn.danger{color:var(--danger)}
+    .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow)}.metric .label{color:var(--muted);font-size:12px}.metric .value{font-size:24px;font-weight:800;margin-top:6px}.metric small{color:var(--muted)}.two{display:grid;grid-template-columns:1.3fr .7fr;gap:12px;margin-top:12px}.chart{height:230px;display:flex;align-items:flex-end;gap:18px;padding:20px 8px 8px}.barwrap{flex:1;text-align:center;color:var(--muted);font-size:12px}.bar{width:100%;border-radius:8px 8px 0 0;min-height:4px;background:var(--primary);margin-bottom:8px}.bar.exp{background:var(--danger)}
+    .table-card{margin-top:12px;padding:0;overflow:hidden}.toolbar{display:flex;gap:8px;padding:14px;border-bottom:1px solid var(--line);flex-wrap:wrap}.toolbar input,.toolbar select,.form input,.form select{background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:9px}.toolbar input{flex:1;min-width:180px}table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:11px 12px;border-bottom:1px solid var(--line);text-align:left}th{font-size:11px;text-transform:uppercase;color:var(--muted)}td.money{text-align:right;font-variant-numeric:tabular-nums}.badge{display:inline-block;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:700}.paid{background:rgba(5,150,105,.12);color:var(--success)}.pending{background:rgba(217,119,6,.12);color:var(--warn)}.overdue{background:rgba(220,38,38,.12);color:var(--danger)}
+    .hidden{display:none!important}.modal{position:fixed;inset:0;background:rgba(0,0,0,.48);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}.modalbox{width:min(560px,100%);background:var(--card);border-radius:16px;border:1px solid var(--line);padding:18px}.modalhead{display:flex;justify-content:space-between;align-items:center}.form{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}.form .full{grid-column:1/-1}.form label{font-size:12px;color:var(--muted);display:block;margin-bottom:5px}.empty{padding:30px;text-align:center;color:var(--muted)}.section{display:none}.section.active{display:block}.row-actions button{border:0;background:transparent;cursor:pointer;color:var(--primary);margin-right:6px}.row-actions .del{color:var(--danger)}
+    .progress{height:8px;background:var(--line);border-radius:999px;overflow:hidden}.progress>span{display:block;height:100%;background:var(--primary)}
+    @media(max-width:900px){.app{grid-template-columns:1fr}.sidebar{position:static;height:auto;padding:10px}.brand{padding-bottom:10px}.nav{display:flex;overflow:auto;gap:4px}.nav button{white-space:nowrap;width:auto}.main{padding:14px}.grid{grid-template-columns:1fr 1fr}.two{grid-template-columns:1fr}}
+    @media(max-width:560px){.grid{grid-template-columns:1fr}.topbar{align-items:flex-start;flex-direction:column}.form{grid-template-columns:1fr}.form .full{grid-column:auto}table{min-width:760px}.table-card{overflow:auto}}
+  input,select{max-width:100%}.modalbox{max-height:90vh;overflow:auto}.form input,.form select{width:100%}button:disabled{opacity:.5;cursor:wait}@media print{.sidebar,.topbar,.btn,#notice{display:none!important}.app{display:block}.section{display:none!important}#relatorios{display:block!important}.card{box-shadow:none}}</style>
+</head>
+<body>
+<div id="notice" role="status" aria-live="polite" style="position:sticky;top:0;background:var(--card);padding:10px 20px;z-index:60"></div>
+<section id="authPanel" class="card" style="max-width:440px;margin:8vh auto"><h1>Meu Financeiro</h1><p>Seu dinheiro, organizado em um só lugar.</p><form id="authForm" class="form"><div class="full"><label for="email">E-mail</label><input id="email" type="email" autocomplete="email" required></div><div class="full"><label for="password">Senha</label><input id="password" type="password" minlength="8" autocomplete="current-password" required></div><div class="full actions"><button class="btn primary" value="login">Entrar</button><button class="btn" value="signup">Criar conta</button></div></form><p style="color:var(--muted)">No primeiro acesso, crie sua conta e confirme seu e-mail.</p></section>
+<div id="app" class="app hidden">
+  <aside class="sidebar">
+    <div class="brand">Meu Financeiro</div>
+    <div class="nav">
+      <button class="active" data-section="dashboard">Visão geral</button>
+      <button data-section="receitas">Receitas</button>
+      <button data-section="despesas">Despesas</button>
+      <button data-section="orcamento">Planejamento</button>
+      <button data-section="relatorios">Relatórios</button>
+    </div>
+  </aside>
+  <main class="main">
+    <div class="topbar">
+      <div><h1 id="pageTitle">Visão geral</h1><div style="color:var(--muted);font-size:13px">Controle financeiro pessoal · <span id="account"></span></div></div>
+      <div class="actions"><input type="month" id="month" aria-label="Mês de referência"><button class="btn" id="logout">Sair</button><button class="btn" id="themeBtn">Tema</button><button class="btn primary" id="newBtn">+ Novo lançamento</button></div>
+    </div>
+
+    <section id="dashboard" class="section active">
+      <div class="grid" id="metrics"></div>
+      <div class="two">
+        <div class="card"><b>Receitas x Despesas</b><div class="chart" id="chart"></div></div>
+        <div class="card"><b>Resumo do mês</b><div id="monthSummary" style="margin-top:18px"></div></div>
+      </div>
+      <div class="card table-card"><div class="toolbar"><b>Últimos lançamentos</b></div><div id="recentTable"></div></div>
+    </section>
+
+    <section id="receitas" class="section"><div class="card table-card"><div class="toolbar"><input id="searchReceitas" placeholder="Pesquisar receitas..."><select id="filterReceitas"><option value="all">Todos</option><option value="paid">Recebidos</option><option value="pending">Pendentes</option></select></div><div id="receitasTable"></div></div></section>
+    <section id="despesas" class="section"><div class="card table-card"><div class="toolbar"><input id="searchDespesas" placeholder="Pesquisar despesas..."><select id="filterDespesas"><option value="all">Todos</option><option value="paid">Pagos</option><option value="pending">Pendentes</option><option value="overdue">Vencidos</option></select></div><div id="despesasTable"></div></div></section>
+    <section id="orcamento" class="section"><div class="actions"><button id="addBudget" class="btn primary">Definir orçamento mensal</button><button id="addGoal" class="btn">+ Nova meta</button></div><h2>Orçamento do mês</h2><div class="grid" id="budgetCards"></div><h2>Metas financeiras</h2><div class="grid" id="goalCards"></div></section>
+    <section id="relatorios" class="section"><div class="card"><b>Relatório mensal</b><p style="color:var(--muted)">Resumo dos lançamentos do mês atual.</p><div id="reportContent"></div><button class="btn primary" onclick="window.print()">Imprimir / Salvar em PDF</button></div></section>
+  </main>
+</div>
+
+<div id="modal" class="modal hidden"><div class="modalbox"><div class="modalhead"><h3 style="margin:0"><span id="modalTitle">Novo lançamento</span></h3><button class="btn" id="closeModal">Fechar</button></div><form id="entryForm" class="form">
+  <div><label for="type">Tipo</label><select id="type"><option value="income">Receita</option><option value="expense">Despesa</option></select></div>
+  <div><label for="status">Status</label><select id="status"><option value="pending">Pendente</option><option value="paid">Pago/Recebido</option><option value="overdue">Vencido</option></select></div>
+  <div class="full"><label for="description">Descrição</label><input id="description" required placeholder="Ex.: Aluguel, salário, passagem"></div>
+  <div><label>Categoria</label><button type="button" class="btn" id="addCategory">+ Categoria</button><select id="category"><option>Moradia</option><option>Alimentação</option><option>Transporte</option><option>Lazer</option><option>Saúde</option><option>Salário</option><option>Outros</option></select></div>
+  <div><label for="amount">Valor</label><input id="amount" type="number" min="0.01" step="0.01" required></div>
+  <div><label for="date">Data</label><input id="date" type="date" required></div>
+  <div><label for="due">Vencimento</label><input id="due" type="date"></div>
+  <div class="full"><label for="payment">Forma de pagamento</label><select id="payment"><option>PIX</option><option>Débito</option><option>Crédito</option><option>Dinheiro</option><option>Boleto</option><option>Transferência</option></select></div>
+  <div class="full"><label for="notes">Observações</label><input id="notes" maxlength="2000"></div><div class="full" style="display:flex;justify-content:flex-end;gap:8px"><button type="button" class="btn" id="cancelModal">Cancelar</button><button class="btn primary" type="submit">Salvar</button></div>
+</form></div></div>
+
+<script src="./supabase.js"></script>
+<script src="./app.js"></script>
+</body></html>
