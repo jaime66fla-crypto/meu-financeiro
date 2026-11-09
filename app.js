@@ -44,7 +44,6 @@ function recurringCategoryOptions(){const old=$('recCategory')?.value;if(!$('rec
 function recurringTable(rows){if(!rows.length)return '<div class="empty">Nenhuma conta recorrente cadastrada.</div>';return `<table><thead><tr><th>Descrição</th><th>Categoria</th><th>Venc.</th><th>Tipo</th><th>Situação</th><th style="text-align:right">Valor</th><th>Ações</th></tr></thead><tbody>${rows.map(r=>{const cat=categories.find(c=>c.id===r.category_id)?.name||'Sem categoria';const kind=r.recurrence_kind==='installment'?('Parcelada'+(r.total_installments?' · '+r.total_installments+'x':'')):'Mensal';return `<tr><td><b>${escapeHTML(r.description)}</b></td><td>${escapeHTML(cat)}</td><td>Dia ${r.day_of_month}</td><td>${kind}</td><td><span class="badge ${r.active?'paid':'pending'}">${r.active?'Ativa':'Pausada'}</span></td><td class="money">${fmt.format(r.amount)}</td><td class="row-actions"><button onclick="editRecurring('${r.id}')">Editar</button><button onclick="toggleRecurring('${r.id}')">${r.active?'Pausar':'Ativar'}</button><button class="del" onclick="deleteRecurring('${r.id}')">Excluir</button></td></tr>`}).join('')}</tbody></table>`}
 function renderRecurring(){if(!$('recurringExpenseTable'))return;$('recurringExpenseTable').innerHTML=recurringTable(recurring.filter(r=>r.type==='expense').sort((a,b)=>a.description.localeCompare(b.description)));$('recurringIncomeTable').innerHTML=recurringTable(recurring.filter(r=>r.type==='income').sort((a,b)=>a.description.localeCompare(b.description)))}
 function renderCash(){if(!$('cashSummary'))return;const active=cashAccounts.filter(a=>a.active);const total=active.reduce((s,a)=>s+a.balance,0);$('cashSummary').innerHTML=metricCard('Valor guardado',total,'soma das contas ativas')+metricCard('Contas ativas',active.length,'reservas e saldos cadastrados');$('cashAccountsTable').innerHTML=!cashAccounts.length?'<div class="empty">Nenhuma conta cadastrada.</div>':`<table><thead><tr><th>Conta</th><th>Instituição</th><th>Tipo</th><th>Situação</th><th style="text-align:right">Saldo</th><th>Ações</th></tr></thead><tbody>${cashAccounts.map(a=>`<tr><td><b>${escapeHTML(a.name)}</b></td><td>${escapeHTML(a.institution||'—')}</td><td>${escapeHTML(({reserva:'Reserva',corrente:'Conta corrente',poupanca:'Poupança',dinheiro:'Dinheiro',investimento:'Investimento',outros:'Outros'})[a.account_type]||a.account_type)}</td><td><span class="badge ${a.active?'paid':'pending'}">${a.active?'Ativa':'Inativa'}</span></td><td class="money">${fmt.format(a.balance)}</td><td class="row-actions"><button onclick="editCash('${a.id}')">Editar</button><button onclick="toggleCash('${a.id}')">${a.active?'Desativar':'Ativar'}</button><button class="del" onclick="deleteCash('${a.id}')">Excluir</button></td></tr>`).join('')}</tbody></table>`}
-}
 function renderAll(){renderMetrics();renderTables();renderBudget();renderReport();renderRecurring();renderCash()}
 function openModal(){document.getElementById('modal').classList.remove('hidden')} function closeModal(){document.getElementById('modal').classList.add('hidden');editing=null;document.getElementById('entryForm').reset();document.getElementById('date').value=isoToday}
 window.editRow=id=>{const r=data.find(x=>x.id===id);editing=id;['type','status','description','amount','date','due','payment','notes'].forEach(k=>$(k).value=r[k]||'');categoryOptions();$('category').value=r.category_id||'';$('modalTitle').textContent='Editar lançamento';openModal()};
@@ -54,10 +53,22 @@ document.getElementById('newBtn').onclick=()=>{closeModal();categoryOptions();$(
 document.getElementById('themeBtn').onclick=()=>{document.body.classList.toggle('dark');localStorage.setItem('dark',document.body.classList.contains('dark')?'1':'0')};if(localStorage.getItem('dark')==='1')document.body.classList.add('dark');['searchReceitas','filterReceitas','searchDespesas','filterDespesas'].forEach(id=>document.getElementById(id).addEventListener('input',renderTables));
 
 $('month').value=isoToday.slice(0,7);$('month').onchange=renderAll;$('type').onchange=categoryOptions;
-$('authForm').onsubmit=async e=>{e.preventDefault();const b=e.submitter||$('loginBtn');const action=b?.value||'login';if(b)b.disabled=true;notice(action==='signup'?'Criando conta...':'Entrando...');try{const credentials={email:$('email').value.trim().toLowerCase(),password:$('password').value};if(!credentials.email||!credentials.password)throw Error('Informe e-mail e senha.');const r=action==='signup'?await db.auth.signUp({...credentials,options:{emailRedirectTo:APP_URL}}):await db.auth.signInWithPassword(credentials);if(r.error)throw r.error;if(action==='signup'&&!r.data.session){notice('Confira seu e-mail para confirmar o cadastro.');return}if(!r.data.session)throw Error('Não foi possível iniciar a sessão.');await sessionChanged(r.data.session);notice('Conectado.')}catch(e){const msg=(e?.message||String(e));if(/invalid login credentials/i.test(msg))notice('E-mail ou senha incorretos.');else fail(e)}finally{if(b)b.disabled=false}};
+$('authForm').onsubmit=async e=>{e.preventDefault();const b=e.submitter||$('loginBtn');const action=b?.value||'login';if(b)b.disabled=true;notice(action==='signup'?'Criando conta...':'Entrando...');try{const credentials={email:$('email').value.trim().toLowerCase(),password:$('password').value};if(!credentials.email||!credentials.password)throw Error('Informe e-mail e senha.');if(action==='signup'&&credentials.password.length<8)throw Error('Para criar conta, use uma senha com pelo menos 8 caracteres.');const r=action==='signup'?await db.auth.signUp({...credentials,options:{emailRedirectTo:APP_URL}}):await db.auth.signInWithPassword(credentials);if(r.error)throw r.error;if(action==='signup'&&!r.data.session){notice('Confira seu e-mail para confirmar o cadastro.');return}if(!r.data.session)throw Error('Não foi possível iniciar a sessão.');await sessionChanged(r.data.session);notice('Conectado.')}catch(e){const msg=(e?.message||String(e));if(/invalid login credentials/i.test(msg))notice('E-mail ou senha incorretos.');else fail(e)}finally{if(b)b.disabled=false}};
 $('logout').onclick=async()=>{try{await check(db.auth.signOut());await sessionChanged(null);notice('Você saiu da conta.')}catch(e){fail(e)}};
 $('addCategory').onclick=async()=>{const name=prompt('Nome da categoria:');if(!name?.trim())return;try{await check(db.from('categories').insert({user_id:user.id,name:name.trim(),type:$('type').value}));await load();notice('Categoria criada.')}catch(e){fail(e)}};
-function moneyInput(label,initial=''){const v=prompt(label,initial);if(v===null)return null;const n=Number(v.replace(',','.'));if(!Number.isFinite(n)||n<0)throw Error('Valor inválido. Use apenas números.');return n}
+function parseMoney(value){
+  let text=String(value).trim().replace(/^R\$\s*/, '');
+  if(!text)throw Error('Informe um valor.');
+  if(text.includes(',')){
+    if(!/^(?:\d+|\d{1,3}(?:\.\d{3})+),\d{1,2}$/.test(text))throw Error('Valor inválido. Exemplo: 1.000,00.');
+    text=text.replace(/\./g,'').replace(',','.');
+  }else if(/^\d{1,3}(?:\.\d{3})+$/.test(text))text=text.replace(/\./g,'');
+  else if(!/^\d+(?:\.\d{1,2})?$/.test(text))throw Error('Valor inválido. Exemplo: 1.000,00.');
+  const amount=Number(text);
+  if(!Number.isFinite(amount)||amount<0)throw Error('Valor inválido.');
+  return amount;
+}
+function moneyInput(label,initial=''){const value=prompt(label,initial);return value===null?null:parseMoney(value)}
 $('addBudget').onclick=async()=>{try{const amount=moneyInput('Limite de despesas do mês (R$):');if(amount===null)return;const existing=budgets.find(b=>!b.category_id&&b.month_start=== $('month').value+'-01');await check(existing?db.from('budgets').update({amount}).eq('id',existing.id).eq('user_id',user.id):db.from('budgets').insert({user_id:user.id,amount,month_start:$('month').value+'-01'}));await load()}catch(e){fail(e)}};
 $('addGoal').onclick=async()=>{try{const name=prompt('Nome da meta:');if(!name?.trim())return;const target_amount=moneyInput('Valor da meta (R$):');if(target_amount===null)return;await check(db.from('goals').insert({user_id:user.id,name:name.trim(),target_amount,current_amount:0}));await load()}catch(e){fail(e)}};
 window.updateGoal=async id=>{try{const g=goals.find(x=>x.id===id);const current_amount=moneyInput('Valor já guardado (R$):',String(g.current_amount));if(current_amount===null)return;await check(db.from('goals').update({current_amount}).eq('id',id).eq('user_id',user.id));await load()}catch(e){fail(e)}};
@@ -73,16 +84,36 @@ window.toggleRecurring=async id=>{try{const r=recurring.find(x=>x.id===id);await
 window.deleteRecurring=async id=>{if(!confirm('Excluir esta recorrência? Os lançamentos mensais já existentes serão mantidos.'))return;try{await check(db.from('recurring_rules').delete().eq('id',id).eq('user_id',user.id).select().single());await load();notice('Recorrência excluída.')}catch(e){fail(e)}};
 $('recurringForm').addEventListener('submit',async e=>{e.preventDefault();const b=e.submitter;b.disabled=true;try{const payload={user_id:user.id,type:$('recType').value,description:$('recDescription').value.trim(),category_id:$('recCategory').value||null,amount:Number($('recAmount').value),day_of_month:Number($('recDay').value),start_month:monthStart($('recStart').value),end_month:monthStart($('recEnd').value),recurrence_kind:$('recKind').value,total_installments:$('recKind').value==='installment'?Number($('recInstallments').value||0)||null:null,payment_method:$('recPayment').value||null,notes:$('recNotes').value.trim(),active:$('recActive').value==='true',updated_at:new Date().toISOString()};if(!payload.description||payload.amount<=0)throw Error('Informe descrição e valor maior que zero.');if(payload.recurrence_kind==='installment'&&!payload.total_installments)throw Error('Informe o número de parcelas.');let saved;if(recurringEditing){saved=await check(db.from('recurring_rules').update(payload).eq('id',recurringEditing).eq('user_id',user.id).select().single());await syncFutureOccurrences(saved)}else{saved=await check(db.from('recurring_rules').insert(payload).select().single());await syncFutureOccurrences(saved)}closeRecurringModal();await load();notice('Conta recorrente salva.')}catch(e){fail(e)}finally{b.disabled=false}});
 async function syncFutureOccurrences(rule){
-  const start=new Date(rule.start_month+'T12:00:00Z');const end=rule.end_month?new Date(rule.end_month+'T12:00:00Z'):null;const todayMonth=new Date(Date.UTC(new Date().getUTCFullYear(),new Date().getUTCMonth(),1));
-  const maxMonths=rule.recurrence_kind==='installment'?(rule.total_installments||1):36;
+  const owner=user.id;
+  const existingRows=await check(db.from('transactions').select('*').eq('user_id',owner).eq('recurring_rule_id',rule.id));
+  const existingByNumber=new Map(existingRows.map(row=>[Number(row.occurrence_number),row]));
+  const start=new Date(rule.start_month+'T12:00:00Z');
+  const currentMonth=isoToday.slice(0,7)+'-01';
+  const maxMonths=rule.recurrence_kind==='installment'?rule.total_installments:Math.max(36,...existingRows.map(row=>Number(row.occurrence_number)||0));
+  const validNumbers=new Set();
   for(let i=0;i<maxMonths;i++){
-    const d=new Date(Date.UTC(start.getUTCFullYear(),start.getUTCMonth()+i,1));if(end&&d>end)break;
-    const occurrence=i+1;const day=Math.min(rule.day_of_month,new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+1,0)).getUTCDate());const date=`${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-    const existing=await check(db.from('transactions').select('*').eq('user_id',user.id).eq('recurring_rule_id',rule.id).eq('occurrence_number',occurrence).maybeSingle());
+    const d=new Date(Date.UTC(start.getUTCFullYear(),start.getUTCMonth()+i,1));
+    const month=`${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-01`;
+    if(rule.end_month&&month>rule.end_month)break;
+    const occurrence=i+1;
+    validNumbers.add(occurrence);
+    const day=Math.min(rule.day_of_month,new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+1,0)).getUTCDate());
+    const date=month.slice(0,8)+String(day).padStart(2,'0');
+    const existing=existingByNumber.get(occurrence);
+    const values={type:rule.type,description:rule.description,category_id:rule.category_id,amount:rule.amount,transaction_date:date,due_date:date,payment_method:rule.payment_method,notes:rule.notes||'Gerado por conta recorrente'};
     if(existing){
-      if(existing.status!=='paid' && d>=todayMonth){await check(db.from('transactions').update({type:rule.type,description:rule.description,category_id:rule.category_id,amount:rule.amount,transaction_date:date,due_date:date,payment_method:rule.payment_method,notes:rule.notes||'Gerado por conta recorrente',updated_at:new Date().toISOString()}).eq('id',existing.id).eq('user_id',user.id))}
-    } else if(rule.active){
-      await check(db.from('transactions').insert({user_id:user.id,type:rule.type,description:rule.description,category_id:rule.category_id,amount:rule.amount,transaction_date:date,due_date:date,status:'pending',payment_method:rule.payment_method,notes:rule.notes||'Gerado por conta recorrente',recurring_rule_id:rule.id,occurrence_number:occurrence}))
+      // Preserve paid entries and the history of earlier months, including moved start dates.
+      if(existing.status!=='paid'&&existing.transaction_date>=currentMonth&&month>=currentMonth){
+        await check(db.from('transactions').update({...values,updated_at:new Date().toISOString()}).eq('id',existing.id).eq('user_id',owner).neq('status','paid'));
+      }
+    }else if(rule.active){
+      await check(db.from('transactions').insert({...values,user_id:owner,status:'pending',recurring_rule_id:rule.id,occurrence_number:occurrence}));
+    }
+  }
+  // Trim only unpaid future entries outside the new installment count or end month.
+  for(const existing of existingRows){
+    if(!validNumbers.has(Number(existing.occurrence_number))&&existing.status!=='paid'&&existing.transaction_date>=currentMonth){
+      await check(db.from('transactions').delete().eq('id',existing.id).eq('user_id',owner).eq('recurring_rule_id',rule.id).neq('status','paid').gte('transaction_date',currentMonth));
     }
   }
 }
@@ -101,4 +132,4 @@ $('newCashAccount').onclick=openCashModal;$('closeCashModal').onclick=closeCashM
 $('forgotBtn').onclick=async()=>{const email=$('email').value.trim().toLowerCase();if(!email){notice('Informe seu e-mail antes de recuperar a senha.');$('email').focus();return}const b=$('forgotBtn');b.disabled=true;try{const redirectTo=APP_URL;const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo});if(error)throw error;notice('Enviamos um link de redefinição para seu e-mail.')}catch(e){fail(e)}finally{b.disabled=false}};
 function closeResetModal(){$('resetModal').classList.add('hidden');$('resetForm').reset()}
 $('closeResetModal').onclick=closeResetModal;$('cancelResetModal').onclick=closeResetModal;
-$('resetForm').addEventListener('submit',async e=>{e.preventDefault();const b=e.submitter;b.disabled=true;try{const p=$('newPassword').value,c=$('confirmPassword').value;if(p.length<6)throw Error('A senha precisa ter pelo menos 6 caracteres.');if(p!==c)throw Error('As senhas não coincidem.');const {error}=await db.auth.updateUser({password:p});if(error)throw error;closeResetModal();notice('Senha alterada com sucesso. Você já pode entrar com a nova senha.')}catch(e){fail(e)}finally{b.disabled=false}});
+$('resetForm').addEventListener('submit',async e=>{e.preventDefault();const b=e.submitter;b.disabled=true;try{const p=$('newPassword').value,c=$('confirmPassword').value;if(p.length<8)throw Error('A senha precisa ter pelo menos 8 caracteres.');if(p!==c)throw Error('As senhas não coincidem.');const {error}=await db.auth.updateUser({password:p});if(error)throw error;closeResetModal();notice('Senha alterada com sucesso. Você já pode entrar com a nova senha.')}catch(e){fail(e)}finally{b.disabled=false}});

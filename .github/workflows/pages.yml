@@ -24,6 +24,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Validate JavaScript and regression cases
+        run: |
+          node --check app.js
+          node tests/regression.cjs
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 

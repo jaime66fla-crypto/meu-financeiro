@@ -22,7 +22,7 @@
 </head>
 <body>
 <div id="notice" role="status" aria-live="polite" style="position:sticky;top:0;background:var(--card);padding:10px 20px;z-index:60"></div>
-<section id="authPanel" class="card" style="max-width:440px;margin:8vh auto"><h1>Meu Financeiro</h1><p>Seu dinheiro, organizado em um só lugar.</p><form id="authForm" class="form"><div class="full"><label for="email">E-mail</label><input id="email" type="email" autocomplete="email" required></div><div class="full"><label for="password">Senha</label><input id="password" type="password" minlength="8" autocomplete="current-password" required></div><div class="full actions"><button type="submit" class="btn primary" id="loginBtn" value="login">Entrar</button><button type="submit" class="btn" id="signupBtn" value="signup">Criar conta</button><button type="button" class="btn" id="forgotBtn">Esqueci minha senha</button></div></form><p style="color:var(--muted)">No primeiro acesso, crie sua conta e confirme seu e-mail.</p></section>
+<section id="authPanel" class="card" style="max-width:440px;margin:8vh auto"><h1>Meu Financeiro</h1><p>Seu dinheiro, organizado em um só lugar.</p><form id="authForm" class="form"><div class="full"><label for="email">E-mail</label><input id="email" type="email" autocomplete="email" required></div><div class="full"><label for="password">Senha</label><input id="password" type="password" autocomplete="current-password" required></div><div class="full actions"><button type="submit" class="btn primary" id="loginBtn" value="login">Entrar</button><button type="submit" class="btn" id="signupBtn" value="signup">Criar conta</button><button type="button" class="btn" id="forgotBtn">Esqueci minha senha</button></div></form><p style="color:var(--muted)">No primeiro acesso, crie sua conta e confirme seu e-mail.</p></section>
 <div id="app" class="app hidden">
   <aside class="sidebar">
     <div class="brand">Meu Financeiro</div>
@@ -97,8 +97,8 @@
 </form></div></div>
 
 <div id="resetModal" class="modal hidden"><div class="modalbox"><div class="modalhead"><h3 style="margin:0">Definir nova senha</h3><button class="btn" id="closeResetModal">Fechar</button></div><form id="resetForm" class="form">
-  <div class="full"><label for="newPassword">Nova senha</label><input id="newPassword" type="password" minlength="6" required placeholder="Digite a nova senha"></div>
-  <div class="full"><label for="confirmPassword">Confirmar nova senha</label><input id="confirmPassword" type="password" minlength="6" required placeholder="Repita a nova senha"></div>
+  <div class="full"><label for="newPassword">Nova senha</label><input id="newPassword" type="password" minlength="8" required placeholder="Digite a nova senha"></div>
+  <div class="full"><label for="confirmPassword">Confirmar nova senha</label><input id="confirmPassword" type="password" minlength="8" required placeholder="Repita a nova senha"></div>
   <div class="full" style="display:flex;justify-content:flex-end;gap:8px"><button type="button" class="btn" id="cancelResetModal">Cancelar</button><button class="btn primary" type="submit">Salvar nova senha</button></div>
 </form></div></div>
 
@@ -113,5 +113,5 @@
 </form></div></div>
 
 <script src="./supabase.js?v=20261109-4"></script>
-<script src="./app.js?v=20261109-5"></script>
+<script src="./app.js?v=20261109-6"></script>
 </body></html>
