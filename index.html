@@ -31,6 +31,7 @@
       <button data-section="receitas">Receitas</button>
       <button data-section="despesas">Despesas</button>
       <button data-section="recorrentes">Recorrentes</button>
+      <button data-section="caixa">Caixa</button>
       <button data-section="orcamento">Planejamento</button>
       <button data-section="relatorios">Relatórios</button>
     </div>
@@ -56,6 +57,11 @@
       <div class="actions"><button id="newRecurringExpense" class="btn primary">+ Conta recorrente a pagar</button><button id="newRecurringIncome" class="btn">+ Conta recorrente a receber</button></div>
       <h2>A pagar recorrentes</h2><div class="card table-card"><div id="recurringExpenseTable"></div></div>
       <h2>A receber recorrentes</h2><div class="card table-card"><div id="recurringIncomeTable"></div></div>
+    </section>
+    <section id="caixa" class="section">
+      <div class="actions"><button id="newCashAccount" class="btn primary">+ Adicionar conta</button></div>
+      <div class="grid" id="cashSummary" style="margin-top:12px"></div>
+      <div class="card table-card"><div class="toolbar"><b>Onde está seu dinheiro guardado</b></div><div id="cashAccountsTable"></div></div>
     </section>
     <section id="orcamento" class="section"><div class="actions"><button id="addBudget" class="btn primary">Definir orçamento mensal</button><button id="addGoal" class="btn">+ Nova meta</button></div><h2>Orçamento do mês</h2><div class="grid" id="budgetCards"></div><h2>Metas financeiras</h2><div class="grid" id="goalCards"></div></section>
     <section id="relatorios" class="section"><div class="card"><b>Relatório mensal</b><p style="color:var(--muted)">Resumo dos lançamentos do mês atual.</p><div id="reportContent"></div><button class="btn primary" onclick="window.print()">Imprimir / Salvar em PDF</button></div></section>
@@ -88,6 +94,16 @@
   <div class="full"><label for="recPayment">Forma de pagamento</label><select id="recPayment"><option value="">Não informada</option><option>PIX</option><option>Débito</option><option>Crédito</option><option>Dinheiro</option><option>Boleto</option><option>Transferência</option></select></div>
   <div class="full"><label for="recNotes">Observações</label><input id="recNotes" maxlength="2000"></div>
   <div class="full" style="display:flex;justify-content:flex-end;gap:8px"><button type="button" class="btn" id="cancelRecurringModal">Cancelar</button><button class="btn primary" type="submit">Salvar recorrência</button></div>
+</form></div></div>
+
+<div id="cashModal" class="modal hidden"><div class="modalbox"><div class="modalhead"><h3 style="margin:0"><span id="cashModalTitle">Conta / Reserva</span></h3><button class="btn" id="closeCashModal">Fechar</button></div><form id="cashForm" class="form">
+  <div class="full"><label for="cashName">Nome da conta</label><input id="cashName" required placeholder="Ex.: Reserva Inter, Poupança, Dinheiro"></div>
+  <div><label for="cashInstitution">Banco / Instituição</label><input id="cashInstitution" placeholder="Ex.: Inter, Itaú, Nubank"></div>
+  <div><label for="cashType">Tipo</label><select id="cashType"><option value="reserva">Reserva</option><option value="corrente">Conta corrente</option><option value="poupanca">Poupança</option><option value="dinheiro">Dinheiro</option><option value="investimento">Investimento</option><option value="outros">Outros</option></select></div>
+  <div><label for="cashBalance">Valor guardado</label><input id="cashBalance" type="number" min="0" step="0.01" required></div>
+  <div><label for="cashActive">Situação</label><select id="cashActive"><option value="true">Ativa</option><option value="false">Inativa</option></select></div>
+  <div class="full"><label for="cashNotes">Observações</label><input id="cashNotes" maxlength="2000"></div>
+  <div class="full" style="display:flex;justify-content:flex-end;gap:8px"><button type="button" class="btn" id="cancelCashModal">Cancelar</button><button class="btn primary" type="submit">Salvar</button></div>
 </form></div></div>
 
 <script src="./supabase.js"></script>
