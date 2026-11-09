@@ -1,7 +1,7 @@
 
 const fmt = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
 const today = new Date(); const isoToday = new Intl.DateTimeFormat('en-CA').format(today); document.getElementById('date').value=isoToday;
-let data=[], categories=[], budgets=[], goals=[], editing=null, user=null;
+let data=[], categories=[], budgets=[], goals=[], recurring=[], editing=null, recurringEditing=null, user=null;
 const $=id=>document.getElementById(id);
 const db=window.supabase.createClient('https://dnfcqeawfcudnyxqzibb.supabase.co','sb_publishable_SMfgKezBGomReUbGJte69Q_6bHamg4j');
 const escapeHTML=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -9,13 +9,13 @@ function notice(s){$('notice').textContent=s}
 function fail(e){notice('Não foi possível concluir: '+(e.message||e))}
 async function check(q){const r=await q;if(r.error)throw r.error;return r.data}
 async function load(){
- const tables=await Promise.all(['transactions','categories','budgets','goals'].map(t=>check(db.from(t).select('*').eq('user_id',user.id))));
- categories=tables[1];budgets=tables[2];goals=tables[3];
+ const tables=await Promise.all(['transactions','categories','budgets','goals','recurring_rules'].map(t=>check(db.from(t).select('*').eq('user_id',user.id))));
+ categories=tables[1];budgets=tables[2];goals=tables[3];recurring=tables[4].map(r=>({...r,amount:Number(r.amount)}));
  data=tables[0].map(r=>({...r,amount:Number(r.amount),date:r.transaction_date,due:r.due_date,payment:r.payment_method,category:categories.find(c=>c.id===r.category_id)?.name||'Outros'}));
- renderAll();categoryOptions();
+ renderAll();categoryOptions();recurringCategoryOptions();
 }
 function categoryOptions(){const old=$('category').value;$('category').innerHTML='<option value="">Sem categoria</option>'+categories.filter(c=>c.type===$('type').value).map(c=>`<option value="${c.id}">${escapeHTML(c.name)}</option>`).join('');$('category').value=old}
-async function sessionChanged(session){user=session?.user||null;$('authPanel').classList.toggle('hidden',!!user);$('app').classList.toggle('hidden',!user);if(user){$('account').textContent=user.email;try{await load()}catch(e){fail(e)}}else{data=[];categories=[];budgets=[];goals=[];renderAll()}}
+async function sessionChanged(session){user=session?.user||null;$('authPanel').classList.toggle('hidden',!!user);$('app').classList.toggle('hidden',!user);if(user){$('account').textContent=user.email;try{await load()}catch(e){fail(e)}}else{data=[];categories=[];budgets=[];goals=[];recurring=[];renderAll()}}
 function sameMonth(d){return d?.slice(0,7)=== $('month').value}
 function statusOf(r){if(r.status==='paid')return 'paid'; if(r.status==='overdue'||(r.due&&r.due<isoToday))return 'overdue'; return 'pending'}
 function statusLabel(r){return statusOf(r)==='paid'?(r.type==='income'?'Recebido':'Pago'):statusOf(r)==='overdue'?'Vencido':'Pendente'}
@@ -29,7 +29,10 @@ function renderBudget(){
  $('goalCards').innerHTML=goals.map(g=>`<div class="card"><b>${escapeHTML(g.name)}</b><p>${fmt.format(g.current_amount)} / ${fmt.format(g.target_amount)}</p><p>${g.target_date?new Date(g.target_date+'T12:00:00').toLocaleDateString('pt-BR'): 'Sem prazo'}</p><button class="btn" onclick="updateGoal('${g.id}')">Atualizar valor</button> <button class="btn" onclick="removePlan('goals','${g.id}')">Excluir</button></div>`).join('')||'<div class="card empty">Cadastre uma meta financeira.</div>';
 }
 function renderReport(){const m=metrics();document.getElementById('reportContent').innerHTML=`<p><b>Receitas recebidas:</b> ${fmt.format(m.inc)}</p><p><b>Despesas pagas:</b> ${fmt.format(m.exp)}</p><p><b>A receber:</b> ${fmt.format(m.toGet)}</p><p><b>A pagar:</b> ${fmt.format(m.toPay)}</p><p><b>Saldo projetado:</b> ${fmt.format(m.balance+m.toGet-m.toPay)}</p>`}
-function renderAll(){renderMetrics();renderTables();renderBudget();renderReport()}
+function recurringCategoryOptions(){const old=$('recCategory')?.value;if(!$('recCategory'))return;$('recCategory').innerHTML='<option value="">Sem categoria</option>'+categories.filter(c=>c.type===$('recType').value).map(c=>`<option value="${c.id}">${escapeHTML(c.name)}</option>`).join('');$('recCategory').value=old||''}
+function recurringTable(rows){if(!rows.length)return '<div class="empty">Nenhuma conta recorrente cadastrada.</div>';return `<table><thead><tr><th>Descrição</th><th>Categoria</th><th>Venc.</th><th>Tipo</th><th>Situação</th><th style="text-align:right">Valor</th><th>Ações</th></tr></thead><tbody>${rows.map(r=>{const cat=categories.find(c=>c.id===r.category_id)?.name||'Sem categoria';const kind=r.recurrence_kind==='installment'?('Parcelada'+(r.total_installments?' · '+r.total_installments+'x':'')):'Mensal';return `<tr><td><b>${escapeHTML(r.description)}</b></td><td>${escapeHTML(cat)}</td><td>Dia ${r.day_of_month}</td><td>${kind}</td><td><span class="badge ${r.active?'paid':'pending'}">${r.active?'Ativa':'Pausada'}</span></td><td class="money">${fmt.format(r.amount)}</td><td class="row-actions"><button onclick="editRecurring('${r.id}')">Editar</button><button onclick="toggleRecurring('${r.id}')">${r.active?'Pausar':'Ativar'}</button><button class="del" onclick="deleteRecurring('${r.id}')">Excluir</button></td></tr>`}).join('')}</tbody></table>`}
+function renderRecurring(){if(!$('recurringExpenseTable'))return;$('recurringExpenseTable').innerHTML=recurringTable(recurring.filter(r=>r.type==='expense').sort((a,b)=>a.description.localeCompare(b.description)));$('recurringIncomeTable').innerHTML=recurringTable(recurring.filter(r=>r.type==='income').sort((a,b)=>a.description.localeCompare(b.description)))}
+function renderAll(){renderMetrics();renderTables();renderBudget();renderReport();renderRecurring()}
 function openModal(){document.getElementById('modal').classList.remove('hidden')} function closeModal(){document.getElementById('modal').classList.add('hidden');editing=null;document.getElementById('entryForm').reset();document.getElementById('date').value=isoToday}
 window.editRow=id=>{const r=data.find(x=>x.id===id);editing=id;['type','status','description','amount','date','due','payment','notes'].forEach(k=>$(k).value=r[k]||'');categoryOptions();$('category').value=r.category_id||'';$('modalTitle').textContent='Editar lançamento';openModal()};
 window.deleteRow=async id=>{if(!confirm('Excluir este lançamento?'))return;try{await check(db.from('transactions').delete().eq('id',id).eq('user_id',user.id).select().single());await load();notice('Lançamento excluído.')}catch(e){fail(e)}};
@@ -48,3 +51,28 @@ window.updateGoal=async id=>{try{const g=goals.find(x=>x.id===id);const current_
 window.removePlan=async(table,id)=>{if(!['budgets','goals'].includes(table)||!confirm('Excluir este planejamento?'))return;try{await check(db.from(table).delete().eq('id',id).eq('user_id',user.id));await load()}catch(e){fail(e)}};
 db.auth.onAuthStateChange((event,session)=>{setTimeout(()=>sessionChanged(session).catch(fail),0)});
 db.auth.getSession().then(({data,error})=>{if(error)throw error;return sessionChanged(data.session)}).catch(fail);
+
+function openRecurringModal(type='expense'){recurringEditing=null;$('recurringForm').reset();$('recType').value=type;$('recActive').value='true';$('recKind').value='monthly';$('recDay').value='10';$('recStart').value=$('month').value;recurringCategoryOptions();$('recurringModalTitle').textContent=type==='expense'?'Conta recorrente a pagar':'Conta recorrente a receber';$('recurringModal').classList.remove('hidden')}
+function closeRecurringModal(){$('recurringModal').classList.add('hidden');recurringEditing=null}
+function monthStart(v){return v?v+'-01':null}
+window.editRecurring=id=>{const r=recurring.find(x=>x.id===id);if(!r)return;recurringEditing=id;$('recType').value=r.type;$('recActive').value=String(r.active);$('recDescription').value=r.description;$('recAmount').value=r.amount;$('recDay').value=r.day_of_month;$('recKind').value=r.recurrence_kind;$('recInstallments').value=r.total_installments||'';$('recStart').value=r.start_month?.slice(0,7)||'';$('recEnd').value=r.end_month?.slice(0,7)||'';$('recPayment').value=r.payment_method||'';$('recNotes').value=r.notes||'';recurringCategoryOptions();$('recCategory').value=r.category_id||'';$('recurringModalTitle').textContent='Editar conta recorrente';$('recurringModal').classList.remove('hidden')};
+window.toggleRecurring=async id=>{try{const r=recurring.find(x=>x.id===id);await check(db.from('recurring_rules').update({active:!r.active,updated_at:new Date().toISOString()}).eq('id',id).eq('user_id',user.id).select().single());await load();notice(r.active?'Recorrência pausada.':'Recorrência ativada.')}catch(e){fail(e)}};
+window.deleteRecurring=async id=>{if(!confirm('Excluir esta recorrência? Os lançamentos mensais já existentes serão mantidos.'))return;try{await check(db.from('recurring_rules').delete().eq('id',id).eq('user_id',user.id).select().single());await load();notice('Recorrência excluída.')}catch(e){fail(e)}};
+$('recurringForm').addEventListener('submit',async e=>{e.preventDefault();const b=e.submitter;b.disabled=true;try{const payload={user_id:user.id,type:$('recType').value,description:$('recDescription').value.trim(),category_id:$('recCategory').value||null,amount:Number($('recAmount').value),day_of_month:Number($('recDay').value),start_month:monthStart($('recStart').value),end_month:monthStart($('recEnd').value),recurrence_kind:$('recKind').value,total_installments:$('recKind').value==='installment'?Number($('recInstallments').value||0)||null:null,payment_method:$('recPayment').value||null,notes:$('recNotes').value.trim(),active:$('recActive').value==='true',updated_at:new Date().toISOString()};if(!payload.description||payload.amount<=0)throw Error('Informe descrição e valor maior que zero.');if(payload.recurrence_kind==='installment'&&!payload.total_installments)throw Error('Informe o número de parcelas.');let saved;if(recurringEditing){saved=await check(db.from('recurring_rules').update(payload).eq('id',recurringEditing).eq('user_id',user.id).select().single());await syncFutureOccurrences(saved)}else{saved=await check(db.from('recurring_rules').insert(payload).select().single());await syncFutureOccurrences(saved)}closeRecurringModal();await load();notice('Conta recorrente salva.')}catch(e){fail(e)}finally{b.disabled=false}});
+async function syncFutureOccurrences(rule){
+  const start=new Date(rule.start_month+'T12:00:00Z');const end=rule.end_month?new Date(rule.end_month+'T12:00:00Z'):null;const todayMonth=new Date(Date.UTC(new Date().getUTCFullYear(),new Date().getUTCMonth(),1));
+  const maxMonths=rule.recurrence_kind==='installment'?(rule.total_installments||1):36;
+  for(let i=0;i<maxMonths;i++){
+    const d=new Date(Date.UTC(start.getUTCFullYear(),start.getUTCMonth()+i,1));if(end&&d>end)break;
+    const occurrence=i+1;const day=Math.min(rule.day_of_month,new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+1,0)).getUTCDate());const date=`${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const existing=await check(db.from('transactions').select('*').eq('user_id',user.id).eq('recurring_rule_id',rule.id).eq('occurrence_number',occurrence).maybeSingle());
+    if(existing){
+      if(existing.status!=='paid' && d>=todayMonth){await check(db.from('transactions').update({type:rule.type,description:rule.description,category_id:rule.category_id,amount:rule.amount,transaction_date:date,due_date:date,payment_method:rule.payment_method,notes:rule.notes||'Gerado por conta recorrente',updated_at:new Date().toISOString()}).eq('id',existing.id).eq('user_id',user.id))}
+    } else if(rule.active){
+      await check(db.from('transactions').insert({user_id:user.id,type:rule.type,description:rule.description,category_id:rule.category_id,amount:rule.amount,transaction_date:date,due_date:date,status:'pending',payment_method:rule.payment_method,notes:rule.notes||'Gerado por conta recorrente',recurring_rule_id:rule.id,occurrence_number:occurrence}))
+    }
+  }
+}
+$('newRecurringExpense').onclick=()=>openRecurringModal('expense');
+$('newRecurringIncome').onclick=()=>openRecurringModal('income');
+$('closeRecurringModal').onclick=closeRecurringModal;$('cancelRecurringModal').onclick=closeRecurringModal;$('recType').onchange=recurringCategoryOptions;
