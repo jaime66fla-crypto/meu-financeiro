@@ -156,3 +156,39 @@ $('forgotBtn').onclick=async()=>{const email=$('email').value.trim().toLowerCase
 function closeResetModal(){$('resetModal').classList.add('hidden');$('resetForm').reset()}
 $('closeResetModal').onclick=closeResetModal;$('cancelResetModal').onclick=closeResetModal;
 $('resetForm').addEventListener('submit',async e=>{e.preventDefault();const b=e.submitter;b.disabled=true;try{const p=$('newPassword').value,c=$('confirmPassword').value;if(p.length<8)throw Error('A senha precisa ter pelo menos 8 caracteres.');if(p!==c)throw Error('As senhas não coincidem.');const {error}=await db.auth.updateUser({password:p});if(error)throw error;closeResetModal();notice('Senha alterada com sucesso. Você já pode entrar com a nova senha.')}catch(e){fail(e)}finally{b.disabled=false}});
+
+
+// PoupeMais dashboard: all figures come from the authenticated account.
+const legacyRenderTables=renderTables;
+renderMetrics=function(){
+ const m=metrics(),saved=cashAccounts.filter(a=>a.active).reduce((s,a)=>s+a.balance,0);
+ const cards=[['Saldo do mês',m.balance,'Receitas recebidas − despesas pagas','↗'],['Receitas',m.inc,'Recebidas no período','＋'],['Despesas',m.exp,'Pagas no período','−'],['A pagar',m.toPay,'Pendências do período','◈'],['Valor guardado',saved,'Contas e reservas ativas','◆']];
+ $('metrics').innerHTML=cards.map(([label,value,caption,icon],i)=>`<article class="summary-card ${i===0?'accent-green':''}"><div class="summary-head"><span>${label}</span><div class="icon-chip ${i===2?'red':i===3?'pink':''}">${icon}</div></div><strong>${fmt.format(value)}</strong><small>${caption}</small></article>`).join('');
+ $('sidebarSaving').textContent=fmt.format(m.balance);
+ $('sidebarSavingCaption').textContent='Saldo do período selecionado';
+ $('profileName').textContent=user?.user_metadata?.full_name||user?.email?.split('@')[0]||'Minha conta';
+ const end=$('month').value||isoToday.slice(0,7),[year,month]=end.split('-').map(Number);
+ const series=Array.from({length:6},(_,i)=>{const d=new Date(year,month-6+i,1),key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;const rows=data.filter(r=>r.date.slice(0,7)===key&&r.status==='paid');return {label:d.toLocaleDateString('pt-BR',{month:'short'}),inc:rows.filter(r=>r.type==='income').reduce((s,r)=>s+r.amount,0),exp:rows.filter(r=>r.type==='expense').reduce((s,r)=>s+r.amount,0)}});
+ const max=Math.max(1,...series.flatMap(r=>[r.inc,r.exp]));
+ $('cashflowChart').innerHTML=series.map(r=>`<div class="flow-group"><div class="flow-bars"><div class="flow-bar income" style="height:${r.inc/max*100}%" title="Receitas: ${fmt.format(r.inc)}"></div><div class="flow-bar expense" style="height:${r.exp/max*100}%" title="Despesas: ${fmt.format(r.exp)}"></div></div><span>${r.label}</span><small>${fmt.format(r.inc)}<br>${fmt.format(r.exp)}</small></div>`).join('');
+ const groups=new Map();data.filter(r=>sameMonth(r.date)&&r.type==='expense'&&r.status==='paid').forEach(r=>groups.set(r.category,(groups.get(r.category)||0)+r.amount));
+ const cats=[...groups].sort((a,b)=>b[1]-a[1]),total=cats.reduce((s,r)=>s+r[1],0),colors=['#10b981','#38bdf8','#f59e0b','#8b5cf6','#f43f5e','#64748b'];let offset=0;
+ const stops=cats.map(([label,value],i)=>{const start=offset;offset+=total?value/total*100:0;return `${colors[i%colors.length]} ${start}% ${offset}%`});
+ $('categoryChart').innerHTML=`<div class="donut" style="background:${total?'conic-gradient('+stops.join(',')+')':'var(--line)'}"><div class="donut-center">Despesas pagas<strong>${fmt.format(total)}</strong></div></div>`;
+ $('categoryLegend').innerHTML=cats.map(([label,value],i)=>`<div class="legend-row"><span class="legend-dot" style="background:${colors[i%colors.length]}"></span>${escapeHTML(label)}<strong>${fmt.format(value)}</strong></div>`).join('')||'<div class="empty">Sem despesas pagas neste período.</div>';
+ $('dashboardGoals').innerHTML=goals.map(g=>{const p=Math.min(100,Number(g.target_amount)>0?Number(g.current_amount)/Number(g.target_amount)*100:0);return `<div class="goal"><div class="goal-row"><strong>${escapeHTML(g.name)}</strong><span>${Math.round(p)}%</span></div><div class="progress"><span style="width:${p}%"></span></div><p>${fmt.format(g.current_amount)} de ${fmt.format(g.target_amount)}</p></div>`}).join('')||'<div class="empty">Crie sua primeira meta.</div>';
+ $('dashboardPayables').innerHTML=data.filter(r=>sameMonth(r.date)&&r.type==='expense'&&r.status!=='paid').sort((a,b)=>(a.due||a.date).localeCompare(b.due||b.date)).slice(0,5).map(r=>`<div class="simple-row"><div><strong>${escapeHTML(r.description)}</strong><br><span>${new Date((r.due||r.date)+'T12:00:00').toLocaleDateString('pt-BR')}</span></div><div><strong>${fmt.format(r.amount)}</strong><br><span class="badge ${statusOf(r)}">${statusLabel(r)}</span></div></div>`).join('')||'<div class="empty">Nenhuma conta pendente no período.</div>';
+ $('dashboardRecurring').innerHTML=recurring.filter(r=>r.active&&r.type==='income').map(r=>`<div class="simple-row"><div><strong>${escapeHTML(r.description)}</strong><br><span>Todo dia ${r.day_of_month}</span></div><strong>${fmt.format(r.amount)}</strong></div>`).join('')||'<div class="empty">Nenhuma receita recorrente ativa.</div>';
+};
+renderTables=function(){legacyRenderTables();$('recentTable').innerHTML=[...data].filter(r=>sameMonth(r.date)).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5).map(r=>`<button class="transaction" onclick="editRow('${r.id}')"><div class="transaction-icon">${r.type==='income'?'↗':'↘'}</div><div class="transaction-meta"><strong>${escapeHTML(r.description)}</strong><span>${escapeHTML(r.category)} · ${new Date(r.date+'T12:00:00').toLocaleDateString('pt-BR')} · ${statusLabel(r)}</span></div><div class="amount ${r.type}">${r.type==='income'?'+':'−'} ${fmt.format(r.amount)}</div></button>`).join('')||'<div class="empty">Nenhuma transação neste período.</div>'};
+function navigate(section){document.querySelectorAll('.nav button').forEach(b=>{if(b.dataset.section===section)b.click()})}
+$('menuBtn').onclick=()=>{const side=$('sidebar');side.classList.toggle('open');$('menuBtn').setAttribute('aria-expanded',side.classList.contains('open'))};
+document.querySelectorAll('.nav button').forEach(b=>{const original=b.onclick;b.onclick=()=>{original();$('sidebar').classList.remove('open');$('menuBtn').setAttribute('aria-expanded','false')}});
+document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>navigate(b.dataset.go));
+$('dashboardAddGoal').onclick=()=>$('addGoal').click();
+$('exportBtn').onclick=()=>{
+ const safe=v=>'"'+String(v??'').replace(/^[=+\-@\t\r]/,"'"+'$&').replace(/"/g,'""')+'"';
+ const rows=[['Descrição','Tipo','Categoria','Data','Vencimento','Status','Valor'],...data.filter(r=>sameMonth(r.date)).map(r=>[r.description,r.type==='income'?'Receita':'Despesa',r.category,r.date,r.due,statusLabel(r),r.amount.toFixed(2).replace('.',',')])];
+ const blob=new Blob(['\ufeff'+rows.map(r=>r.map(safe).join(';')).join('\r\n')],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='transacoes-'+$('month').value+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+};
+document.querySelectorAll('.modal').forEach(m=>{m.setAttribute('role','dialog');m.setAttribute('aria-modal','true');m.addEventListener('click',e=>{if(e.target===m)m.querySelector('.modalhead button')?.click()})});

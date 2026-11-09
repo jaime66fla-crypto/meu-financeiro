@@ -42,5 +42,15 @@ async function sync(rule,fixtures){rows=structuredClone(fixtures);writes=[];cont
  await sync({...rule,recurrence_kind:'monthly',total_installments:null,end_month:date(0,'01')},[baseRow(1,date(0)),baseRow(2,date(1))]);assert.equal(rows.length,1,'end month removes later unpaid occurrences');
  await sync({...rule,active:false},[]);assert.equal(writes.length,0,'paused rule does not generate entries');
  await sync(rule,[]);assert.equal(rows.length,2);await sync(rule,rows);assert.equal(rows.length,2,'retry does not duplicate occurrences');
+ context.fixture=[{id:'x',date:month+'-05',description:'<img src=x>',amount:1000,type:'income',status:'paid',category:'Outros'},{id:'y',date:month+'-06',description:'Despesa',amount:400,type:'expense',status:'paid',category:'Moradia'},{id:'z',date:month+'-07',due:month+'-10',description:'Pendente',amount:150,type:'expense',status:'pending',category:'Moradia'}];
+ run('data=fixture; renderAll()');
+ assert.match(elements.get('metrics').innerHTML,/600,00/,'balance uses paid transactions only');
+ assert.match(elements.get('metrics').innerHTML,/150,00/,'pending payable total');
+ assert.match(elements.get('categoryLegend').innerHTML,/400,00/,'category chart uses paid expenses');
+ assert.match(elements.get('recentTable').innerHTML,/&lt;img src=x&gt;/,'dashboard escapes descriptions');
+ assert.equal((elements.get('cashflowChart').innerHTML.match(/class="flow-group"/g)||[]).length,6,'cash flow shows six months');
+ run("data=[]; goals=[]; recurring=[]; cashAccounts=[]; renderAll()");
+ assert.match(elements.get('recentTable').innerHTML,/Nenhuma transação/);
  console.log('PASS: startup, money formats, login/reset validation, recovery feedback, recurrence shortening/end date, paid/history/user preservation, month end, pause and idempotent retry');
 })().catch(e=>{console.error(e);process.exitCode=1});
+
