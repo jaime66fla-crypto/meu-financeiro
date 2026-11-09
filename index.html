@@ -55,6 +55,7 @@
     <section id="despesas" class="section"><div class="card table-card"><div class="toolbar"><input id="searchDespesas" placeholder="Pesquisar despesas..."><select id="filterDespesas"><option value="all">Todos</option><option value="paid">Pagos</option><option value="pending">Pendentes</option><option value="overdue">Vencidos</option></select></div><div id="despesasTable"></div></div></section>
     <section id="recorrentes" class="section">
       <div class="actions"><button id="newRecurringExpense" class="btn primary">+ Conta recorrente a pagar</button><button id="newRecurringIncome" class="btn">+ Conta recorrente a receber</button></div>
+      <div class="grid" id="recurringSummary" style="margin-top:12px"></div>
       <h2>A pagar recorrentes</h2><div class="card table-card"><div id="recurringExpenseTable"></div></div>
       <h2>A receber recorrentes</h2><div class="card table-card"><div id="recurringIncomeTable"></div></div>
     </section>
@@ -113,5 +114,5 @@
 </form></div></div>
 
 <script src="./supabase.js?v=20261109-4"></script>
-<script src="./app.js?v=20261109-6"></script>
+<script src="./app.js?v=20261109-7"></script>
 </body></html>
