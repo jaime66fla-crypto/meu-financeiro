@@ -99,12 +99,14 @@
             <div><h2>Contas a pagar</h2><p>Próximos vencimentos</p></div>
           </div>
           <div id="dashboardPayables"></div>
+          <div class="simple-row" style="border-top:1px solid var(--line);margin-top:12px;padding-top:16px;flex-wrap:wrap"><strong>Total a pagar</strong><strong id="dashboardPayablesTotal" style="font-size:18px" aria-live="polite">R$ 0,00</strong></div>
         </article>
         <article class="panel">
           <div class="panel-header">
             <div><h2>Contas a receber</h2><p>Recebimentos pendentes do período</p></div>
           </div>
           <div id="dashboardReceivables"></div>
+          <div class="simple-row" style="border-top:1px solid var(--line);margin-top:12px;padding-top:16px;flex-wrap:wrap"><strong>Total a receber</strong><strong id="dashboardReceivablesTotal" style="font-size:18px" aria-live="polite">R$ 0,00</strong></div>
         </article>
       </section>
     </section><section id="receitas" class="section"><div class="card table-card"><div class="toolbar"><input id="searchReceitas" placeholder="Pesquisar receitas..."><select id="filterReceitas"><option value="all">Todos</option><option value="paid">Recebidos</option><option value="pending">Pendentes</option></select></div><div id="receitasTable"></div></div></section>
@@ -169,5 +171,5 @@
   <div class="full" style="display:flex;justify-content:flex-end;gap:8px"><button type="button" class="btn" id="cancelCashModal">Cancelar</button><button class="btn primary" type="submit">Salvar</button></div>
 </form></div></div>
 
-<script src="./supabase.js?v=20261109-4"></script><script src="./app.js?v=20261110-receber1"></script></body>
+<script src="./supabase.js?v=20261109-4"></script><script src="./app.js?v=20261110-totais1"></script></body>
 </html>
