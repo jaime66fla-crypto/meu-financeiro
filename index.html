@@ -1,2 +1,86 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>PoupeMais</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="styles.css"></head><body><div class="layout"><aside><div class="brand"><span>✳</span> PoupeMais</div><p>SUAS FINANÇAS</p><a href="#resumo">Visão geral</a><a href="#lancamentos">Lançamentos</a><a href="#dados">Seus dados</a><div class="aside-note">Um passo de cada vez.<br><strong>Seu dinheiro com mais clareza.</strong></div></aside><main><header><div><div class="eyebrow">CONTROLE FINANCEIRO PESSOAL</div><h1>Seu dinheiro, com clareza.</h1><p>Acompanhe o que entra, o que sai e planeje seus próximos passos.</p></div><button id="new" class="primary">+ Novo lançamento</button></header><section id="resumo"><div class="section-head"><div><span class="eyebrow">SEU RESUMO</span><h2>Visão geral</h2></div><label>Mês <input type="month" id="month"></label></div><div class="cards"><article class="balance"><span>Saldo do mês</span><strong id="balance">R$ 0,00</strong><small>Receitas menos despesas</small></article><article><span>Receitas</span><strong id="income">R$ 0,00</strong><small>Entradas no período</small></article><article><span>Despesas</span><strong id="expense">R$ 0,00</strong><small>Saídas no período</small></article></div></section><section class="panel" id="lancamentos"><div class="section-head"><div><span class="eyebrow">MOVIMENTAÇÕES</span><h2>Seus lançamentos</h2></div><select id="filter" aria-label="Filtrar lançamentos"><option value="all">Todos os tipos</option><option value="income">Receitas</option><option value="expense">Despesas</option></select></div><div id="list"></div></section><section class="panel data" id="dados"><div><span class="eyebrow">SEUS DADOS</span><h2>Você está no controle</h2><p>Os lançamentos ficam neste navegador. Guarde uma cópia para transferir ou recuperar seus dados.</p></div><div class="actions"><button id="export">Exportar cópia</button><label class="button">Importar cópia<input id="import" type="file" accept="application/json" hidden></label></div></section><footer>PoupeMais · Uma vida financeira mais tranquila começa aqui.</footer></main></div><dialog id="dialog"><form id="form"><div class="section-head"><h2 id="formTitle">Novo lançamento</h2><button type="button" id="close" aria-label="Fechar">✕</button></div><label>Tipo<select id="type"><option value="expense">Despesa</option><option value="income">Receita</option></select></label><label>Descrição<input id="description" maxlength="100" required placeholder="Ex.: supermercado"></label><div class="two"><label>Valor (R$)<input id="amount" type="number" min="0.01" step="0.01" required placeholder="0,00"></label><label>Data<input id="date" type="date" required></label></div><label>Categoria<input id="category" maxlength="60" placeholder="Ex.: alimentação"></label><div class="actions"><button type="button" id="cancel">Cancelar</button><button class="primary" type="submit">Salvar lançamento</button></div></form></dialog><div id="notice" role="status" aria-live="polite"></div><script src="app.js"></script></body></html>
-
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Organize suas finanças pessoais com o PoupeMais. Acompanhe receitas, despesas e o saldo de cada mês.">
+  <meta name="theme-color" content="#0f6cbd">
+  <title>PoupeMais · Controle financeiro pessoal</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
+  <div class="app-bar">
+    <div class="brand"><span class="brand-mark" aria-hidden="true">PM</span> PoupeMais</div>
+    <span class="app-label">Finanças pessoais</span>
+  </div>
+  <div class="layout">
+    <aside>
+      <div>
+        <p class="nav-label">Seu espaço financeiro</p>
+        <nav aria-label="Navegação principal">
+          <a href="#resumo"><span class="nav-symbol" aria-hidden="true">▦</span>Visão geral</a>
+          <a href="#lancamentos"><span class="nav-symbol" aria-hidden="true">≡</span>Lançamentos</a>
+          <a href="#dados"><span class="nav-symbol" aria-hidden="true">▤</span>Seus dados</a>
+        </nav>
+      </div>
+      <div class="aside-note"><strong>Seus dados, com você.</strong>Os lançamentos são salvos neste navegador.</div>
+    </aside>
+    <main id="conteudo" tabindex="-1">
+      <header>
+        <div>
+          <div class="eyebrow">Controle financeiro pessoal</div>
+          <h1>Suas finanças em dia.</h1>
+          <p>Acompanhe receitas, despesas e o saldo de cada mês.</p>
+        </div>
+        <button id="new" class="primary">+ Novo lançamento</button>
+      </header>
+      <section id="resumo" aria-labelledby="resumo-title">
+        <div class="section-head">
+          <div><h2 id="resumo-title">Resumo do mês</h2></div>
+          <label for="month">Período <input type="month" id="month"></label>
+        </div>
+        <div class="cards">
+          <article class="balance"><span>Saldo do mês</span><strong id="balance">R$ 0,00</strong><small>Receitas menos despesas</small></article>
+          <article><span>Receitas</span><strong id="income">R$ 0,00</strong><small>Entradas no período</small></article>
+          <article><span>Despesas</span><strong id="expense">R$ 0,00</strong><small>Saídas no período</small></article>
+        </div>
+      </section>
+      <section class="panel" id="lancamentos" aria-labelledby="lancamentos-title">
+        <div class="section-head">
+          <div><h2 id="lancamentos-title">Lançamentos</h2></div>
+          <select id="filter" aria-label="Filtrar lançamentos"><option value="all">Todos os tipos</option><option value="income">Receitas</option><option value="expense">Despesas</option></select>
+        </div>
+        <div id="list"></div>
+      </section>
+      <section class="panel data" id="dados" aria-labelledby="dados-title">
+        <div>
+          <h2 id="dados-title">Cópia dos seus dados</h2>
+          <p>Os lançamentos ficam neste navegador. Exporte uma cópia para guardar ou transferir seus dados.</p>
+        </div>
+        <div class="actions">
+          <button id="export">Exportar cópia</button>
+          <label class="button">Importar cópia<input id="import" class="file-input" type="file" accept="application/json"></label>
+        </div>
+      </section>
+      <footer>PoupeMais · Controle financeiro pessoal</footer>
+    </main>
+  </div>
+  <dialog id="dialog" aria-labelledby="formTitle">
+    <form id="form">
+      <div class="section-head"><h2 id="formTitle">Novo lançamento</h2><button type="button" id="close" aria-label="Fechar">✕</button></div>
+      <label>Tipo<select id="type"><option value="expense">Despesa</option><option value="income">Receita</option></select></label>
+      <label>Descrição<input id="description" maxlength="100" required placeholder="Ex.: supermercado"></label>
+      <div class="two">
+        <label>Valor (R$)<input id="amount" type="number" min="0.01" step="0.01" required placeholder="0,00"></label>
+        <label>Data<input id="date" type="date" required></label>
+      </div>
+      <label>Categoria<input id="category" maxlength="60" placeholder="Ex.: alimentação"></label>
+      <div class="actions"><button type="button" id="cancel">Cancelar</button><button class="primary" type="submit">Salvar lançamento</button></div>
+    </form>
+  </dialog>
+  <div id="notice" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
